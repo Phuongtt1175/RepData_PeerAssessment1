@@ -38,7 +38,7 @@ stepByDate <- aggregate(steps ~ date, data = RawData,FUN=sum, na.rm = TRUE)
 hist(stepByDate$steps)
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-2-1.png) 
+![](PA1_template_files/figure-html/histogramStepByDate-1.png) 
 
 Mean and median values of steps per day:
 
@@ -119,7 +119,7 @@ for (i in min(stepByInterval$interval):max(stepByInterval$interval))
   }
 ```
 
-Let Check number of NA value ò the new dataset
+Let Check number of NA value of the new dataset
 
 ```r
 #re-count number of NA value
@@ -132,9 +132,21 @@ sum(is.na(FilledData$steps))
 
 Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
+Re-compute step by date base on new dataset (which have been filled) and re-draw histogram
 
 ```r
 stepByDateFilledNA <- aggregate(steps ~ date, data = FilledData,FUN=sum, na.rm = TRUE)
+par(mfrow= c(1,2))
+hist(stepByDate$steps, main="Old histogram")
+hist(stepByDateFilledNA$steps, main="New histogram (Filled)")
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-5-1.png) 
+
+
+New mean and median
+
+```r
 mean(stepByDateFilledNA$steps, na.rm=TRUE)
 ```
 
@@ -151,3 +163,40 @@ median(stepByDateFilledNA$steps,na.rm=TRUE)
 ```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+Create a new factor variable in the dataset with two levels -- "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
+
+
+```r
+FilledData$date <- as.Date(FilledData$date)
+
+FilledData$Day <- weekdays(FilledData$date)
+
+FilledData$TypeOfDay <- NA
+
+#detect weekend
+FilledData[which(FilledData$Day %in% c("Saturday","Sunday")),"TypeOfDay"] <- "weekend"
+#detect weekday
+FilledData[which(is.na(FilledData$TypeOfDay)),"TypeOfDay"] <- "weekday"
+
+#convert to factor
+FilledData$TypeOfDay <- factor(FilledData$TypeOfDay, levels = c("weekend", "weekday"))
+```
+
+Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis)
+
+Load lattice library
+
+```r
+library(lattice)
+```
+
+Prepare data and plot
+
+```r
+AggData = aggregate(steps ~ interval + TypeOfDay,data= FilledData,FUN= mean)
+
+xyplot(steps ~ interval | factor(TypeOfDay), data = AggData, aspect = 1/2, type = "l")
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-8-1.png) 
+
